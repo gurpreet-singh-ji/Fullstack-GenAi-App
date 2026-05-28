@@ -10,6 +10,7 @@ import jwt from "jsonwebtoken"
  */
 async function registerController(req,res) {
     const {username,email,password} = req.body
+    console.log("📝 Register request received:", {username, email})
 
     if (!username || !email || !password) {
         return res.status(400).json({
@@ -22,6 +23,7 @@ async function registerController(req,res) {
     })
 
     if (isUserAlreadyExists) {
+        console.log("❌ Account already exists:", {username, email})
         return res.status(400).json({
             message: "Account already exists"
         })
@@ -35,6 +37,7 @@ async function registerController(req,res) {
         password: hashPassword
     })
 
+    console.log("✅ Account created successfully:", {username, email})
     const token = jwt.sign({id: createUser._id, username: createUser.username},
         process.env.JWT_SECRET,
         {expiresIn: "1d"}
@@ -59,10 +62,12 @@ async function registerController(req,res) {
  */
 async function loginController(req,res) {
     const {email,password} = req.body
+    console.log("🔐 Login request received:", {email})
      
     const user = await User.findOne({email})
     
     if (!user) {
+        console.log("❌ No user found with email:", email)
         return res.status(404).json({
             message: "no user with this email existes. try to register first"
         })
@@ -71,11 +76,13 @@ async function loginController(req,res) {
     const isPasswordValid = await bcrypt.compare(password,user.password)
 
     if (!isPasswordValid) {
+        console.log("❌ Invalid password for user:", email)
         return res.status(400).json({
             message: "incorrect password"
         })
     }
 
+    console.log("✅ Login successful for:", email)
     const token = jwt.sign({id: user._id, username: user.username},
         process.env.JWT_SECRET,
         {expiresIn: "1d"}
