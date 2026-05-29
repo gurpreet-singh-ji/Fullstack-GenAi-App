@@ -33,14 +33,50 @@ const interviewReportSchema = z.object({
 })
 
 async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
+    const prompt = `You are an expert interview preparation assistant. Generate a COMPLETE interview report for a candidate.
 
+CANDIDATE INFORMATION:
+Resume: ${resume}
+Self Description: ${selfDescription}
+Job Description: ${jobDescription}
 
-    const prompt = `Generate an interview report for a candidate with the following details:
-                        Resume: ${resume}
-                        Self Description: ${selfDescription}
-                        Job Description: ${jobDescription}
-                        
-                        Return the response as a valid JSON object matching this schema: ${JSON.stringify(zodToJsonSchema(interviewReportSchema))}`
+YOU MUST RETURN A JSON OBJECT WITH ALL 6 REQUIRED FIELDS:
+1. matchScore (number 0-100)
+2. title (string - job title)
+3. technicalQuestions (array of objects with question, intention, answer)
+4. behavioralQuestions (array of objects with question, intention, answer)
+5. skillGaps (array of objects with skill and severity: low/medium/high)
+6. preparationPlan (array of objects with day, focus, and tasks array)
+
+EXAMPLE RESPONSE FORMAT (MUST FOLLOW THIS STRUCTURE EXACTLY):
+{
+  "matchScore": 85,
+  "title": "Senior Engineer",
+  "technicalQuestions": [
+    {"question": "...", "intention": "...", "answer": "..."},
+    {"question": "...", "intention": "...", "answer": "..."}
+  ],
+  "behavioralQuestions": [
+    {"question": "...", "intention": "...", "answer": "..."},
+    {"question": "...", "intention": "...", "answer": "..."}
+  ],
+  "skillGaps": [
+    {"skill": "...", "severity": "low|medium|high"},
+    {"skill": "...", "severity": "low|medium|high"}
+  ],
+  "preparationPlan": [
+    {"day": 1, "focus": "...", "tasks": ["task1", "task2"]},
+    {"day": 2, "focus": "...", "tasks": ["task1", "task2"]}
+  ]
+}
+
+CRITICAL REQUIREMENTS:
+- Include 2-3 technical questions
+- Include 2-3 behavioral questions
+- Include 2-3 skill gaps
+- Include 3-5 day preparation plan
+- ALL FIELDS ARE MANDATORY - do not omit any field
+- Return ONLY valid JSON, NO markdown, NO extra text`
 
     const response = await groq.chat.completions.create({
         model: "openai/gpt-oss-20b",
@@ -51,13 +87,19 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
             }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.7,
-        max_tokens: 2048
+        temperature: 0.5,
+        max_tokens: 4096
     })
-
-    return JSON.parse(response.choices[0].message.content)
-
-
+    
+    const rawContent = response.choices[0].message.content
+    console.log("AI Response:", rawContent)
+    
+    // Parse and validate against schema
+    const parsedResponse = JSON.parse(rawContent)
+    const validatedResponse = interviewReportSchema.parse(parsedResponse)
+    
+    console.log("Validated Response:", validatedResponse)
+    return validatedResponse
 }
 
 export default generateInterviewReport

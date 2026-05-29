@@ -12,17 +12,15 @@ const skillGapSchema = new mongoose.Schema({
 
 const behavioralQuestionSchema = new mongoose.Schema({
     question: String,
-    answer: String
+    answer: String,
+    intention: String
 }, {
     _id: false
 })
 
 const prepPlanSchema = new mongoose.Schema({
     day: Number,
-    foucusArea: {
-        type: String,
-        enum: ["technical", "behavioral", "both"]
-    },
+    focus: String,
     tasks: {
         type: [String],
     }
@@ -50,15 +48,19 @@ const interviewReportSchema = new mongoose.Schema({
     technicalQuestions: [{
         question: String,
         answer: String, 
-        intension: String
+        intention: String
     }],
     skillGaps: [skillGapSchema],
     behavioralQuestions: [behavioralQuestionSchema],
-    prepPlans: [prepPlanSchema],
+    preparationPlan: [prepPlanSchema],
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true
+    },
+    title: {
+        type: String,
+        required: [true, "Title is required"]
     }
 }, {
     timestamps: true
